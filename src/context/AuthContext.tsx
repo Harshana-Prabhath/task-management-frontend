@@ -18,9 +18,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-    if (token && storedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(storedUser));
+    if (token && storedUser && storedUser !== "undefined") {
+      try{
+        setUser(JSON.parse(storedUser));
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Failed to parse user session tokens:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setIsAuthenticated(false);    
+      }
+    }else{
+        setIsAuthenticated(false);
     }
     setLoading(false);
   }, []);
