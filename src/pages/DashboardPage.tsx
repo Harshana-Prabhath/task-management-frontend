@@ -21,7 +21,8 @@ export default function DashboardPage() {
   const [priorityFilter, setPriorityFilter] = useState<FilterPriority>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [modalOpen, setModalOpen] = useState(false);
+ 
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view" | null>(null);
   const [editTarget, setEditTarget] = useState<Task | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -62,7 +63,7 @@ export default function DashboardPage() {
         activeFilter={statusFilter}
         onFilterChange={setStatusFilter}
         counts={counts}
-        onCreateClick={() => { setEditTarget(null); setModalOpen(true); }}
+        onCreateClick={() => { setEditTarget(null); setModalMode("create"); }} 
         onLogout={logout}
       />
 
@@ -86,7 +87,8 @@ export default function DashboardPage() {
                 <TaskCard
                   key={task.id}
                   task={task}
-                  onEdit={(t) => { setEditTarget(t); setModalOpen(true); }}
+                  onView={(t) => { setEditTarget(t); setModalMode("view"); }}  
+                  onEdit={(t) => { setEditTarget(t); setModalMode("edit"); }}  
                   onDeleteTrigger={setDeleteId}
                 />
               ))}
@@ -95,17 +97,19 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {modalOpen && (
+      
+      {modalMode && (
         <TaskModal
           initial={editTarget}
           role={user.role}
-          onClose={() => setModalOpen(false)}
+          isReadOnly={modalMode === "view"} 
+          onClose={() => setModalMode(null)}
           onSave={(task) => {
             setTasks((prev) => {
               const exists = prev.some((t) => t.id === task.id);
               return exists ? prev.map((t) => (t.id === task.id ? task : t)) : [task, ...prev];
             });
-            setModalOpen(false);
+            setModalMode(null);
           }}
         />
       )}
