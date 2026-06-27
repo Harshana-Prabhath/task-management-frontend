@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ListTodo } from "lucide-react";
 import { Sidebar } from "../components/dashboard/Sidebar";
 import { ControlBar } from "../components/dashboard/ControlBar";
@@ -14,7 +14,7 @@ import { FullScreenLoader } from "../components/ui/FullScreenLoader";
 export default function DashboardPage() {
   const { user, logout } = useAuth();
 
-  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
+  
   const { mutate: handleCreateTask, isPending: isCreatingTask } = useCreateTask();
   const { mutate: handleUpdateTask, isPending: isUpdatingTask } = useUpdateTask(); 
   const { mutate: handleDeleteTask, isPending: isDeletingTask } = useDeleteTask(); 
@@ -23,6 +23,21 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All Tasks");
   const [priorityFilter, setPriorityFilter] = useState<FilterPriority>("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks({
+    search: debouncedSearch,
+    priority: priorityFilter,
+  });
 
  
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view" | null>(null);
@@ -46,16 +61,6 @@ export default function DashboardPage() {
 
   const visibleTasks = rbacTasks.filter((task) => {
     if (statusFilter !== "All Tasks" && task.status !== statusFilter) return false;
-    if (priorityFilter !== "All" && task.priority !== priorityFilter) return false;
-    
-    const query = searchQuery.trim().toLowerCase();
-    if (query) {
-      return (
-        task.title.toLowerCase().includes(query) ||
-        task.description.toLowerCase().includes(query) ||
-        task.assignee.toLowerCase().includes(query)
-      );
-    }
     return true;
   });
 

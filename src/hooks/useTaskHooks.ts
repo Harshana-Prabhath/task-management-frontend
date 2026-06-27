@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { api } from "../services/api";
-import type { Task, BackendTask, CreateTaskPayload } from "../types/task.types";
+import type { Task, BackendTask, CreateTaskPayload, ITaskFilters } from "../types/task.types";
 
 interface ApiResponse<T> {
   status: string;
@@ -9,11 +9,18 @@ interface ApiResponse<T> {
   data: T;
 }
 
-export const useTasks = () => {
+export const useTasks = (filters : ITaskFilters = {search:"", priority: "All"}) => {
   return useQuery<Task[], Error>({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", filters],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<BackendTask[]>>("/tasks");
+      const params = new URLSearchParams();
+      if (filters.search?.trim()) {
+        params.append("search", filters.search.trim());
+      }
+      if (filters.priority && filters.priority !== "All") {
+        params.append("priority", filters.priority);
+      }
+      const response = await api.get<ApiResponse<BackendTask[]>>(`/tasks?${params.toString()}`);
       return response.data.data.map((task) => ({
         id: String(task.id),
         title: task.title,

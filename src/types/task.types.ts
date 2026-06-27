@@ -35,3 +35,8 @@ export interface CreateTaskPayload {
   dueDate: string;
   assignedToId?: string | null;
 }
+
+export interface ITaskFilters {
+  search : string;
+  priority: FilterPriority;
+}
