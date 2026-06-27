@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Loader2 } from "lucide-react";
 import type { Task, Status, Priority } from "../../types/task.types";
+import { useGetAllUsers } from "../../hooks/useUserHooks";
 
 interface TaskModalProps {
   initial: Task | null;
@@ -10,7 +11,7 @@ interface TaskModalProps {
   onSave: (task: Task) => void;
 }
 
-const TEAM_EMAILS = ["alex@tasky.io", "jordan@tasky.io", "sam@tasky.io", "riley@tasky.io", "morgan@tasky.io"];
+
 
 function FloatingField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -24,9 +25,23 @@ function FloatingField({ label, children }: { label: string; children: React.Rea
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({ initial, role, isReadOnly = false, onClose, onSave }) => {
+
+ const { data: teamMembers = [], isLoading: isLoadingUsers } = useGetAllUsers(role === "Admin");
+
   const [draft, setDraft] = useState<Task>(
-    initial ?? { id: "", title: "", description: "", status: "Open", priority: "Medium", assignee: TEAM_EMAILS[0], dueDate: "" }
+    initial ?? { id: "", title: "", description: "", status: "Open", priority: "Medium", assignee: "", dueDate: "" }
   );
+
+  useEffect(() => {
+    if (initial && teamMembers.length > 0) {
+      const matchingMember = teamMembers.find(
+        (m) => m.email.toLowerCase() === initial.assignee.toLowerCase() || m.id === initial.assignee
+      );
+      if (matchingMember) {
+        setDraft((prev) => ({ ...prev, assignee: matchingMember.id }));
+      }
+    }
+  }, [teamMembers, initial]);
 
   const isEdit = Boolean(initial);
   const inputClass = "w-full bg-transparent text-sm text-white placeholder-white/30 outline-none disabled:text-white/60";
@@ -89,11 +104,27 @@ export const TaskModal: React.FC<TaskModalProps> = ({ initial, role, isReadOnly 
 
           {role === "Admin" && (
             <FloatingField label="Assign Task To">
-              <select value={draft.assignee} onChange={(e) => update("assignee", e.target.value)} disabled={isReadOnly} className="w-full appearance-none bg-transparent text-sm text-white outline-none disabled:opacity-70 [&>option]:bg-[#10162A]">
-                {TEAM_EMAILS.map((email) => (
-                  <option key={email} value={email}>{email}</option>
-                ))}
-              </select>
+              {isLoadingUsers ? (
+                <div className="flex items-center gap-2 text-xs text-white/40 py-0.5">
+                  <Loader2 className="h-3 w-3 animate-spin text-indigo-400" />
+                  <span>Loading team members...</span>
+                </div>
+              ) : (
+                <select 
+                  value={draft.assignee} 
+                  onChange={(e) => update("assignee", e.target.value)} 
+                  disabled={isReadOnly} 
+                  className="w-full appearance-none bg-transparent text-sm text-white outline-none disabled:opacity-70 [&>option]:bg-[#10162A]"
+                  required
+                >
+                  <option value="">-- Select Team Member --</option>
+                  {teamMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name ? `${member.name} (${member.email})` : member.email}
+                    </option>
+                  ))}
+                </select>
+              )}
             </FloatingField>
           )}
 

@@ -7,16 +7,19 @@ import { TaskModal } from "../components/modals/TaskModal";
 import { DeleteDialog } from "../components/modals/DeleteDialog";
 import { useAuth } from "../context/AuthContext";
 import type { Task, FilterStatus, FilterPriority } from "../types/task.types";
+import { useTasks,useCreateTask, useUpdateTask, useDeleteTask } from "../hooks/useTaskHooks";
+import { FullScreenLoader } from "../components/ui/FullScreenLoader";
 
-const INITIAL_TASKS: Task[] = [
-  { id: "t1", title: "Design onboarding flow", description: "Craft the full multi-step onboarding sequence.", status: "In Progress", priority: "High", assignee: "harshana@example.com", dueDate: "2026-07-02" },
-  { id: "t2", title: "Refactor auth service", description: "Split monolithic auth handler into middleware.", status: "Open", priority: "Medium", assignee: "alex@tasky.io", dueDate: "2026-07-08" },
-];
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+
+  const { data: tasks = [], isLoading: isLoadingTasks } = useTasks();
+  const { mutate: handleCreateTask, isPending: isCreatingTask } = useCreateTask();
+  const { mutate: handleUpdateTask, isPending: isUpdatingTask } = useUpdateTask(); 
+  const { mutate: handleDeleteTask, isPending: isDeletingTask } = useDeleteTask(); 
   
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All Tasks");
   const [priorityFilter, setPriorityFilter] = useState<FilterPriority>("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,73 +59,98 @@ export default function DashboardPage() {
     return true;
   });
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-[#0B0F19] text-white">
-      <Sidebar
-        user={user}
-        activeFilter={statusFilter}
-        onFilterChange={setStatusFilter}
-        counts={counts}
-        onCreateClick={() => { setEditTarget(null); setModalMode("create"); }} 
-        onLogout={logout}
+return (
+    <>
+      
+      <FullScreenLoader 
+        isLoading={isLoadingTasks || isCreatingTask || isUpdatingTask || isDeletingTask} 
+        message={isCreatingTask ? "Adding task to workspace..." : "Syncing layout boards..."} 
       />
 
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <ControlBar
-          searchValue={searchQuery}
-          onSearchChange={setSearchQuery}
-          priorityFilter={priorityFilter}
-          onPriorityFilterChange={setPriorityFilter}
+      <div className="flex h-screen overflow-hidden bg-[#0B0F19] text-white">
+        <Sidebar
+          user={user}
+          activeFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+          counts={counts}
+          onCreateClick={() => { setEditTarget(null); setModalMode("create"); }} 
+          onLogout={logout}
         />
 
-        <div className="flex-1 overflow-y-auto p-6">
-          {visibleTasks.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-center text-white/30">
-              <ListTodo className="mb-3 h-10 w-10" />
-              <p className="text-sm">No workspace tasks match your parameters.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {visibleTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onView={(t) => { setEditTarget(t); setModalMode("view"); }}  
-                  onEdit={(t) => { setEditTarget(t); setModalMode("edit"); }}  
-                  onDeleteTrigger={setDeleteId}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+        <main className="flex flex-1 flex-col overflow-hidden">
+          <ControlBar
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            priorityFilter={priorityFilter}
+            onPriorityFilterChange={setPriorityFilter}
+          />
 
-      
-      {modalMode && (
-        <TaskModal
-          initial={editTarget}
-          role={user.role}
-          isReadOnly={modalMode === "view"} 
-          onClose={() => setModalMode(null)}
-          onSave={(task) => {
-            setTasks((prev) => {
-              const exists = prev.some((t) => t.id === task.id);
-              return exists ? prev.map((t) => (t.id === task.id ? task : t)) : [task, ...prev];
-            });
-            setModalMode(null);
-          }}
-        />
-      )}
+          <div className="flex-1 overflow-y-auto p-6">
+            {visibleTasks.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center text-center text-white/30">
+                <ListTodo className="mb-3 h-10 w-10" />
+                <p className="text-sm">No workspace tasks match your parameters.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {visibleTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    onView={(t) => { setEditTarget(t); setModalMode("view"); }}  
+                    onEdit={(t) => { setEditTarget(t); setModalMode("edit"); }}  
+                    onDeleteTrigger={setDeleteId}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </main>
 
-      {deleteId && (
-        <DeleteDialog
-          onClose={() => setDeleteId(null)}
-          onConfirm={() => {
-            setTasks((prev) => prev.filter((t) => t.id !== deleteId));
-            setDeleteId(null);
-          }}
-        />
-      )}
-    </div>
+        {modalMode && (
+          <TaskModal
+            initial={editTarget}
+            role={user.role}
+            isReadOnly={modalMode === "view"} 
+            onClose={() => setModalMode(null)}
+            onSave={(taskData) => {
+              if (modalMode === "create") {
+                handleCreateTask({
+                  title: taskData.title,
+                  description: taskData.description,
+                  priority: taskData.priority,
+                  status: taskData.status,
+                  dueDate: taskData.dueDate,
+                  assignedToId: user.role === "Admin" ? (taskData.assignee.trim() ? taskData.assignee : null) : user.id,
+                });
+              } else if (modalMode === "edit") {
+                handleUpdateTask({
+                  id: taskData.id,
+                  payload: {
+                    title: taskData.title,
+                    description: taskData.description,
+                    priority: taskData.priority,
+                    status: taskData.status,
+                    dueDate: taskData.dueDate,
+                    assignedToId: user.role === "Admin" ? (taskData.assignee.trim() ? taskData.assignee : null) : user.id,
+                  }
+                });
+              }
+              setModalMode(null);
+            }}
+          />
+        )}
+
+        {deleteId && (
+          <DeleteDialog
+            onClose={() => setDeleteId(null)}
+            onConfirm={() => {
+              handleDeleteTask(deleteId);
+              setDeleteId(null);
+            }}
+          />
+        )}
+      </div>
+    </>
   );
 }
