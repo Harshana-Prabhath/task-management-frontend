@@ -4,6 +4,7 @@ import { AuthPage } from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import { Toaster } from "react-hot-toast";
 import { THEME } from "./constants/theme";
+import EditProfilePage from "./pages/EditProfilePage";
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -28,7 +29,7 @@ export default function App() {
           
           
           <Route path="/task-dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          
+          <Route path="/profile" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
           
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
