@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AuthPage } from "./pages/AuthPage";
-import { DashboardPage } from "./pages/DashboardPage";
+import DashboardPage from "./pages/DashboardPage";
+import { Toaster } from "react-hot-toast";
+import { THEME } from "./constants/theme";
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -31,6 +33,24 @@ export default function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
+      <Toaster
+  position="top-center"
+  toastOptions={{
+    style: {
+      background: THEME.colors.panel,
+      color: THEME.colors.text,
+      border: `1px solid ${THEME.colors.border}`,
+      borderRadius: THEME.radii.input,
+      fontSize: "14px",
+    },
+    success: {
+      iconTheme: {
+        primary: THEME.colors.success, 
+        secondary: THEME.colors.panel,
+      },
+    },
+  }}
+/>
     </AuthProvider>
   );
 }
