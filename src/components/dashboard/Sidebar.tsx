@@ -1,6 +1,7 @@
 import React from "react";
-import { Plus, LogOut, ListTodo, Circle, Loader2, FlaskConical, CheckCheck } from "lucide-react";
+import { Plus, LogOut, ListTodo, Circle, Loader2, FlaskConical, CheckCheck, Settings } from "lucide-react";
 import type { FilterStatus } from "../../types/task.types";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   user: { name: string; role: string };
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
 }) => {
   const items: FilterStatus[] = ["All Tasks", "Open", "In Progress", "Testing", "Done"];
+  const navigate = useNavigate();
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r border-white/5 bg-[#0F1424]">
@@ -38,17 +40,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <span className="text-lg font-semibold tracking-tight text-white">Tasky</span>
       </div>
 
-      <div className="mx-3 flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500 text-base font-bold uppercase text-white">
-          {user.name.charAt(0)}
+     <button 
+        onClick={() => navigate("/profile")}
+        className="mx-3 flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-3 text-left transition-colors hover:bg-white/5 group focus:outline-none focus:ring-1 focus:ring-white/20"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500 text-base font-bold uppercase text-white">
+            {user.name.charAt(0)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">{user.name}</p>
+            <span className="mt-0.5 inline-block rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">
+              {user.role}
+            </span>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-white">{user.name}</p>
-          <span className="mt-0.5 inline-block rounded-md bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/50">
-            {user.role}
-          </span>
-        </div>
-      </div>
+        <Settings className="h-4 w-4 text-white/20 group-hover:text-white/60 transition-colors shrink-0 ml-1" />
+       </button>
 
       <div className="px-3 py-4">
         <button
