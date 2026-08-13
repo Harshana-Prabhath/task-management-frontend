@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { ListTodo } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Sidebar } from "../components/dashboard/Sidebar";
 import { ControlBar } from "../components/dashboard/ControlBar";
 import { TaskCard } from "../components/dashboard/TaskCard";
 import { TaskModal } from "../components/modals/TaskModal";
 import { DeleteDialog } from "../components/modals/DeleteDialog";
 import type { Task, FilterStatus, FilterPriority } from "../types/task.types";
-import { useTasks,useCreateTask, useUpdateTask, useDeleteTask } from "../hooks/useTaskHooks";
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from "../hooks/useTaskHooks";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader";
 import { useAuthStore } from "../store/useAuthStore";
 
-
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const { user, logout } = useAuthStore();
 
-  
   const { mutate: handleCreateTask, isPending: isCreatingTask } = useCreateTask();
   const { mutate: handleUpdateTask, isPending: isUpdatingTask } = useUpdateTask(); 
   const { mutate: handleDeleteTask, isPending: isDeletingTask } = useDeleteTask(); 
-  
   
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("All Tasks");
   const [priorityFilter, setPriorityFilter] = useState<FilterPriority>("All");
@@ -39,7 +38,6 @@ export default function DashboardPage() {
     priority: priorityFilter,
   });
 
- 
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view" | null>(null);
   const [editTarget, setEditTarget] = useState<Task | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -64,12 +62,11 @@ export default function DashboardPage() {
     return true;
   });
 
-return (
+  return (
     <>
-      
       <FullScreenLoader 
         isLoading={isLoadingTasks || isCreatingTask || isUpdatingTask || isDeletingTask} 
-        message={isCreatingTask ? "Adding task to workspace..." : "Syncing layout boards..."} 
+        message={isCreatingTask ? t("dashboard.adding_task") : t("dashboard.syncing_boards")} 
       />
 
       <div className="flex h-screen overflow-hidden bg-[#0B0F19] text-white">
@@ -94,7 +91,7 @@ return (
             {visibleTasks.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center text-white/30">
                 <ListTodo className="mb-3 h-10 w-10" />
-                <p className="text-sm">No workspace tasks match your parameters.</p>
+                <p className="text-sm">{t("dashboard.no_tasks")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

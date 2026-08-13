@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Task, Status, Priority } from "../../types/task.types";
 import { useGetAllUsers } from "../../hooks/useUserHooks";
 import { FloatingField } from "../ui/FloatingField";
@@ -20,6 +21,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t } = useTranslation();
   const { data: teamMembers = [], isLoading: isLoadingUsers } = useGetAllUsers(
     role === "Admin"
   );
@@ -62,7 +64,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       setErrors((prev) => ({ ...prev, [key]: "" }));
     }
   }
-
 
   const validateField = (field: keyof Task, value: string) => {
     if (isReadOnly) return;
@@ -121,10 +122,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">
             {isReadOnly
-              ? "Task Details"
+              ? t("task_modal.details_title")
               : isEdit
-              ? "Edit Task"
-              : "Create New Task"}
+              ? t("task_modal.edit_title")
+              : t("task_modal.create_title")}
           </h2>
           <button
             type="button"
@@ -136,32 +137,32 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-          <FloatingField label="Title" error={errors.title}>
+          <FloatingField label={t("task_modal.title")} error={errors.title}>
             <input
               type="text"
               value={draft.title}
               onChange={(e) => update("title", e.target.value)}
               onBlur={() => validateField("title", draft.title)}
               disabled={isReadOnly}
-              placeholder="Task title"
+              placeholder={t("task_modal.title_placeholder")}
               className={inputClass}
             />
           </FloatingField>
 
-          <FloatingField label="Description" error={errors.description}>
+          <FloatingField label={t("task_modal.description")} error={errors.description}>
             <textarea
               value={draft.description}
               onChange={(e) => update("description", e.target.value)}
               onBlur={() => validateField("description", draft.description)}
               disabled={isReadOnly}
-              placeholder="No description provided."
+              placeholder={t("task_modal.desc_placeholder")}
               rows={3}
               className={`${inputClass} resize-none`}
             />
           </FloatingField>
 
           <div className="grid grid-cols-2 gap-4">
-            <FloatingField label="Priority" error={errors.priority}>
+            <FloatingField label={t("common.priority")} error={errors.priority}>
               <select
                 value={draft.priority}
                 onChange={(e) => update("priority", e.target.value as Priority)}
@@ -169,13 +170,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 disabled={isReadOnly}
                 className="w-full appearance-none bg-transparent text-sm text-white outline-none disabled:opacity-70 [&>option]:bg-[#10162A]"
               >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
+                <option value="Low">{t("common.low")}</option>
+                <option value="Medium">{t("common.medium")}</option>
+                <option value="High">{t("common.high")}</option>
               </select>
             </FloatingField>
 
-            <FloatingField label="Status" error={errors.status}>
+            <FloatingField label={t("common.status")} error={errors.status}>
               <select
                 value={draft.status}
                 onChange={(e) => update("status", e.target.value as Status)}
@@ -183,15 +184,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 disabled={isReadOnly}
                 className="w-full appearance-none bg-transparent text-sm text-white outline-none disabled:opacity-70 [&>option]:bg-[#10162A]"
               >
-                <option value="Open">Open</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Testing">Testing</option>
-                <option value="Done">Done</option>
+                <option value="Open">{t("common.open")}</option>
+                <option value="In Progress">{t("common.in_progress")}</option>
+                <option value="Testing">{t("common.testing")}</option>
+                <option value="Done">{t("common.done")}</option>
               </select>
             </FloatingField>
           </div>
 
-          <FloatingField label="Due Date" error={errors.dueDate}>
+          <FloatingField label={t("task_modal.due_date")} error={errors.dueDate}>
             <input
               type="date"
               value={draft.dueDate}
@@ -203,11 +204,11 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </FloatingField>
 
           {role === "Admin" && (
-            <FloatingField label="Assign Task To" error={errors.assignee}>
+            <FloatingField label={t("task_modal.assign_to")} error={errors.assignee}>
               {isLoadingUsers ? (
                 <div className="flex items-center gap-2 text-xs text-white/40 py-0.5">
                   <Loader2 className="h-3 w-3 animate-spin text-indigo-400" />
-                  <span>Loading team members...</span>
+                  <span>{t("task_modal.loading_members")}</span>
                 </div>
               ) : (
                 <select
@@ -217,7 +218,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   disabled={isReadOnly}
                   className="w-full appearance-none bg-transparent text-sm text-white outline-none disabled:opacity-70 [&>option]:bg-[#10162A]"
                 >
-                  <option value="">-- Select Team Member --</option>
+                  <option value="">{t("task_modal.select_member")}</option>
                   {teamMembers.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.name
@@ -237,13 +238,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 onClick={onClose}
                 className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/5"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="submit"
                 className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B0F19] shadow-md transition-transform active:scale-[0.98]"
               >
-                {isEdit ? "Save Changes" : "Create Task"}
+                {isEdit ? t("task_modal.save_changes") : t("task_modal.create_task")}
               </button>
             </div>
           )}

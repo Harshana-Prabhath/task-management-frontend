@@ -1,5 +1,6 @@
 import React from "react";
 import { Mail, Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Task, Status, Priority } from "../../types/task.types";
 
 interface TaskCardProps {
@@ -23,6 +24,25 @@ const priorityBadgeStyles: Record<Priority, string> = {
 };
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDeleteTrigger }) => {
+  const { t } = useTranslation();
+
+  const getStatusLabel = (status: Status) => {
+    switch (status) {
+      case "Open": return t("common.open");
+      case "In Progress": return t("common.in_progress");
+      case "Testing": return t("common.testing");
+      case "Done": return t("common.done");
+    }
+  };
+
+  const getPriorityLabel = (priority: Priority) => {
+    switch (priority) {
+      case "Low": return t("common.low");
+      case "Medium": return t("common.medium");
+      case "High": return t("common.high");
+    }
+  };
+
   return (
     <article 
       onClick={() => onView(task)} 
@@ -33,12 +53,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
           {task.title}
         </h3>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${priorityBadgeStyles[task.priority]}`}>
-          {task.priority}
+          {getPriorityLabel(task.priority)}
         </span>
       </div>
 
       <span className={`mb-3 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusPillStyles[task.status]}`}>
-        {task.status}
+        {getStatusLabel(task.status)}
       </span>
 
       <p className="mb-4 line-clamp-2 text-xs leading-relaxed text-white/40">
@@ -57,7 +77,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
               onEdit(task);
             }}
             className="rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white"
-            aria-label="Edit task"
+            aria-label={t("common.edit")}
           >
             <Pencil className="h-4 w-4" />
           </button>
@@ -67,7 +87,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onView, onEdit, onDele
               onDeleteTrigger(task.id);
             }}
             className="rounded-lg p-1.5 text-white/40 transition-colors hover:bg-rose-500/10 hover:text-rose-300"
-            aria-label="Delete task"
+            aria-label={t("common.delete")}
           >
             <Trash2 className="h-4 w-4" />
           </button>

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoginUser, useRegisterUser } from "../hooks/useAuthHooks";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader";
 import { FloatingField } from "../components/ui/FloatingField";
+import { LanguageToggle } from "../components/ui/LaungageToggle";
 import {
   loginSchema,
   registerSchema,
@@ -12,13 +14,13 @@ import {
 type Role = "User" | "Admin";
 
 export function AuthPage() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("User");
 
-  // Track field-level validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isRegister = mode === "register";
@@ -35,7 +37,6 @@ export function AuthPage() {
     setErrors({});
   };
 
-  // Instant single-field validation on click away (onBlur)
   const validateField = (
     field: "name" | "email" | "password" | "role",
     value: string
@@ -56,7 +57,6 @@ export function AuthPage() {
     }
   };
 
-  // Full form validation on Submit button click
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -96,29 +96,30 @@ export function AuthPage() {
       <FullScreenLoader
         isLoading={isLoggingIn || isRegistering}
         message={
-          isRegister ? "Creating your account..." : "Authenticating session..."
+          isRegister ? t("auth.connecting") : t("auth.connecting")
         }
       />
 
       <div className="flex min-h-screen bg-[#0B0F19] text-white">
         <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-12 lg:w-1/2 lg:px-20">
           <div className="mx-auto w-full max-w-sm">
-            <div className="mb-10 flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-base font-black text-[#0B0F19]">
-                T
+            <div className="mb-10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-base font-black text-[#0B0F19]">
+                  T
+                </div>
+                <span className="text-lg font-semibold tracking-tight">
+                  Tasky
+                </span>
               </div>
-              <span className="text-lg font-semibold tracking-tight">
-                Tasky
-              </span>
+              <LanguageToggle />
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight">
-              {isRegister ? "Create an Account" : "Welcome Back!"}
+              {isRegister ? t("auth.create_account") : t("auth.welcome_back")}
             </h1>
             <p className="mt-2 text-sm text-white/40">
-              {isRegister
-                ? "Set up your workspace and choose your role to get started."
-                : "Sign in to continue to your task workspace."}
+              {isRegister ? t("auth.register_sub") : t("auth.login_sub")}
             </p>
 
             <form
@@ -127,7 +128,7 @@ export function AuthPage() {
               className="mt-8 flex flex-col gap-4"
             >
               {isRegister && (
-                <FloatingField label="Full Name" error={errors.name}>
+                <FloatingField label={t("auth.full_name")} error={errors.name}>
                   <input
                     type="text"
                     value={name}
@@ -143,7 +144,7 @@ export function AuthPage() {
                 </FloatingField>
               )}
 
-              <FloatingField label="Email" error={errors.email}>
+              <FloatingField label={t("auth.email")} error={errors.email}>
                 <input
                   type="email"
                   value={email}
@@ -158,7 +159,7 @@ export function AuthPage() {
                 />
               </FloatingField>
 
-              <FloatingField label="Password" error={errors.password}>
+              <FloatingField label={t("auth.password")} error={errors.password}>
                 <input
                   type="password"
                   value={password}
@@ -174,7 +175,7 @@ export function AuthPage() {
               </FloatingField>
 
               {isRegister && (
-                <FloatingField label="Role" error={errors.role}>
+                <FloatingField label={t("auth.role")} error={errors.role}>
                   <select
                     value={role}
                     onChange={(e) => {
@@ -185,8 +186,8 @@ export function AuthPage() {
                     onBlur={() => validateField("role", role)}
                     className="w-full appearance-none bg-transparent text-sm text-white outline-none [&>option]:bg-[#0B0F19]"
                   >
-                    <option value="User">User</option>
-                    <option value="Admin">Admin</option>
+                    <option value="User">{t("common.user")}</option>
+                    <option value="Admin">{t("common.admin")}</option>
                   </select>
                 </FloatingField>
               )}
@@ -197,17 +198,17 @@ export function AuthPage() {
                 className="mt-2 rounded-xl bg-white py-3 text-sm font-semibold text-[#0B0F19] shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_8px_30px_-6px_rgba(255,255,255,0.4)] transition-all hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_10px_40px_-4px_rgba(255,255,255,0.55)] active:scale-[0.99] disabled:opacity-50"
               >
                 {isLoggingIn || isRegistering
-                  ? "Connecting..."
+                  ? t("auth.connecting")
                   : isRegister
-                  ? "Create Account"
-                  : "Sign in"}
+                  ? t("auth.create_account_btn")
+                  : t("auth.sign_in")}
               </button>
             </form>
 
             <p className="mt-8 text-center text-sm text-white/40">
               {isRegister
-                ? "Already have an account? "
-                : "Don't have an account? "}
+                ? t("auth.already_have_account")
+                : t("auth.dont_have_account")}
               <button
                 type="button"
                 onClick={() =>
@@ -215,7 +216,7 @@ export function AuthPage() {
                 }
                 className="font-semibold text-white underline-offset-4 hover:underline"
               >
-                {isRegister ? "Sign In" : "Sign Up"}
+                {isRegister ? t("auth.sign_in") : t("auth.sign_up")}
               </button>
             </p>
           </div>
@@ -227,34 +228,33 @@ export function AuthPage() {
 
           <div className="relative">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-white/50">
-              <CheckCircle2 className="h-3.5 w-3.5" /> Premium Workspace
+              <CheckCircle2 className="h-3.5 w-3.5" /> {t("auth.premium_workspace")}
             </span>
           </div>
 
           <div className="relative">
             <h2 className="max-w-md text-4xl font-bold leading-tight tracking-tight text-balance">
-              Organize the work. Ship with clarity.
+              {t("auth.hero_title")}
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/40">
-              Tasky brings your team's tasks, priorities, and progress into a
-              single focused dark workspace built for momentum.
+              {t("auth.hero_desc")}
             </p>
           </div>
 
           <div className="relative flex items-center gap-6 text-sm text-white/40">
             <div>
               <p className="text-2xl font-bold text-white">12k+</p>
-              <p>Teams</p>
+              <p>{t("auth.teams")}</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div>
               <p className="text-2xl font-bold text-white">99.9%</p>
-              <p>Uptime</p>
+              <p>{t("auth.uptime")}</p>
             </div>
             <div className="h-8 w-px bg-white/10" />
             <div>
               <p className="text-2xl font-bold text-white">4.9★</p>
-              <p>Rating</p>
+              <p>{t("auth.rating")}</p>
             </div>
           </div>
         </div>
