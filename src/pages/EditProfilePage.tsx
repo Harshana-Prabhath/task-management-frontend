@@ -11,7 +11,7 @@ import {
   changePasswordSchema,
   passwordSchema,
   getFieldErrors,
-} from "../validations/schemas";
+} from "../../src/validations/schemas";
 
 interface PasswordFieldConfig {
   key: "currentPassword" | "newPassword" | "confirmPassword";
