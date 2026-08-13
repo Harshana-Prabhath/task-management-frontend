@@ -5,14 +5,14 @@ import { ControlBar } from "../components/dashboard/ControlBar";
 import { TaskCard } from "../components/dashboard/TaskCard";
 import { TaskModal } from "../components/modals/TaskModal";
 import { DeleteDialog } from "../components/modals/DeleteDialog";
-import { useAuth } from "../context/AuthContext";
 import type { Task, FilterStatus, FilterPriority } from "../types/task.types";
 import { useTasks,useCreateTask, useUpdateTask, useDeleteTask } from "../hooks/useTaskHooks";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader";
+import { useAuthStore } from "../store/useAuthStore";
 
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
 
   
   const { mutate: handleCreateTask, isPending: isCreatingTask } = useCreateTask();

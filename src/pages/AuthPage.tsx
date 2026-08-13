@@ -2,25 +2,14 @@ import React, { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useLoginUser, useRegisterUser } from "../hooks/useAuthHooks";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader";
+import { FloatingField } from "../components/ui/FloatingField";
+import {
+  loginSchema,
+  registerSchema,
+  getFieldErrors,
+} from "../validations/schemas";
 
 type Role = "User" | "Admin";
-
-interface User {
-  name: string;
-  email: string;
-  role: Role;
-}
-
-function FloatingField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="relative rounded-xl border border-white/10 bg-white/[0.02] px-4 pb-2.5 pt-5 transition-colors focus-within:border-white/30">
-      <span className="pointer-events-none absolute left-3 top-0 -translate-y-1/2 bg-[#0B0F19] px-2 text-[11px] font-medium uppercase tracking-wide text-white/40">
-        {label}
-      </span>
-      {children}
-    </div>
-  );
-}
 
 export function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -29,31 +18,86 @@ export function AuthPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("User");
 
+  // Track field-level validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const isRegister = mode === "register";
+  const inputClass =
+    "w-full bg-transparent text-sm text-white placeholder-white/30 outline-none";
 
-  const inputClass = "w-full bg-transparent text-sm text-white placeholder-white/30 outline-none";
+  const { mutate: loginUser, isPending: isLoggingIn } = useLoginUser();
+  const { mutate: registerUser, isPending: isRegistering } = useRegisterUser(
+    () => setMode("login")
+  );
 
-  const {mutate: loginUser, isPending: isLoggingIn} = useLoginUser();
-  const { mutate: registerUser, isPending: isRegistering } = useRegisterUser(() => setMode("login"));
+  const handleModeSwitch = (newMode: "login" | "register") => {
+    setMode(newMode);
+    setErrors({});
+  };
 
+  // Instant single-field validation on click away (onBlur)
+  const validateField = (
+    field: "name" | "email" | "password" | "role",
+    value: string
+  ) => {
+    const activeSchema = isRegister ? registerSchema : loginSchema;
+    const fieldSchema = (activeSchema.shape as Record<string, any>)[field];
 
+    if (!fieldSchema) return;
+
+    const result = fieldSchema.safeParse(value);
+    if (!result.success) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: result.error.issues[0]?.message || "Invalid input",
+      }));
+    } else {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  // Full form validation on Submit button click
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if(isRegister){
-        registerUser({ email: email.trim(), password, name: name.trim(), role });
-    }else {
-        loginUser({ email: email.trim(), password });
+
+    if (isRegister) {
+      const result = registerSchema.safeParse({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        role,
+      });
+
+      if (!result.success) {
+        setErrors(getFieldErrors(result.error));
+        return;
+      }
+
+      setErrors({});
+      registerUser(result.data);
+    } else {
+      const result = loginSchema.safeParse({
+        email: email.trim(),
+        password,
+      });
+
+      if (!result.success) {
+        setErrors(getFieldErrors(result.error));
+        return;
+      }
+
+      setErrors({});
+      loginUser(result.data);
     }
-    
-    
   }
 
   return (
     <>
-      
-      <FullScreenLoader 
-        isLoading={isLoggingIn || isRegistering} 
-        message={isRegister ? "Creating your account..." : "Authenticating session..."} 
+      <FullScreenLoader
+        isLoading={isLoggingIn || isRegistering}
+        message={
+          isRegister ? "Creating your account..." : "Authenticating session..."
+        }
       />
 
       <div className="flex min-h-screen bg-[#0B0F19] text-white">
@@ -63,7 +107,9 @@ export function AuthPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-base font-black text-[#0B0F19]">
                 T
               </div>
-              <span className="text-lg font-semibold tracking-tight">Tasky</span>
+              <span className="text-lg font-semibold tracking-tight">
+                Tasky
+              </span>
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight">
@@ -75,47 +121,68 @@ export function AuthPage() {
                 : "Sign in to continue to your task workspace."}
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="mt-8 flex flex-col gap-4"
+            >
               {isRegister && (
-                <FloatingField label="Full Name">
+                <FloatingField label="Full Name" error={errors.name}>
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (errors.name)
+                        setErrors((prev) => ({ ...prev, name: "" }));
+                    }}
+                    onBlur={() => validateField("name", name.trim())}
                     placeholder="Jane Cooper"
                     className={inputClass}
-                    required
                   />
                 </FloatingField>
               )}
 
-              <FloatingField label="Email">
+              <FloatingField label="Email" error={errors.email}>
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email)
+                      setErrors((prev) => ({ ...prev, email: "" }));
+                  }}
+                  onBlur={() => validateField("email", email.trim())}
                   placeholder="you@company.com"
                   className={inputClass}
-                  required
                 />
               </FloatingField>
 
-              <FloatingField label="Password">
+              <FloatingField label="Password" error={errors.password}>
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password)
+                      setErrors((prev) => ({ ...prev, password: "" }));
+                  }}
+                  onBlur={() => validateField("password", password)}
                   placeholder="••••••••"
                   className={inputClass}
-                  required
                 />
               </FloatingField>
 
               {isRegister && (
-                <FloatingField label="Role">
+                <FloatingField label="Role" error={errors.role}>
                   <select
                     value={role}
-                    onChange={(e) => setRole(e.target.value as Role)}
+                    onChange={(e) => {
+                      setRole(e.target.value as Role);
+                      if (errors.role)
+                        setErrors((prev) => ({ ...prev, role: "" }));
+                    }}
+                    onBlur={() => validateField("role", role)}
                     className="w-full appearance-none bg-transparent text-sm text-white outline-none [&>option]:bg-[#0B0F19]"
                   >
                     <option value="User">User</option>
@@ -129,14 +196,23 @@ export function AuthPage() {
                 disabled={isLoggingIn || isRegistering}
                 className="mt-2 rounded-xl bg-white py-3 text-sm font-semibold text-[#0B0F19] shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_8px_30px_-6px_rgba(255,255,255,0.4)] transition-all hover:shadow-[0_0_0_1px_rgba(255,255,255,0.2),0_10px_40px_-4px_rgba(255,255,255,0.55)] active:scale-[0.99] disabled:opacity-50"
               >
-                {isLoggingIn || isRegistering ? "Connecting..." : isRegister ? "Create Account" : "Sign in"}
+                {isLoggingIn || isRegistering
+                  ? "Connecting..."
+                  : isRegister
+                  ? "Create Account"
+                  : "Sign in"}
               </button>
             </form>
 
             <p className="mt-8 text-center text-sm text-white/40">
-              {isRegister ? "Already have an account? " : "Don't have an account? "}
+              {isRegister
+                ? "Already have an account? "
+                : "Don't have an account? "}
               <button
-                onClick={() => setMode(isRegister ? "login" : "register")}
+                type="button"
+                onClick={() =>
+                  handleModeSwitch(isRegister ? "login" : "register")
+                }
                 className="font-semibold text-white underline-offset-4 hover:underline"
               >
                 {isRegister ? "Sign In" : "Sign Up"}
@@ -160,7 +236,8 @@ export function AuthPage() {
               Organize the work. Ship with clarity.
             </h2>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/40">
-              Tasky brings your team's tasks, priorities, and progress into a single focused dark workspace built for momentum.
+              Tasky brings your team's tasks, priorities, and progress into a
+              single focused dark workspace built for momentum.
             </p>
           </div>
 
