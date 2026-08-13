@@ -2,13 +2,12 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast"; 
 import { api } from "../services/api";
-
+import { useAuth } from "../context/AuthContext";
 import type { LoginPayload, RegisterPayload, AuthResponse, ApiError } from "../types/auth.types";
-import { useAuthStore } from "../store/useAuthStore";
 
 export const useLoginUser = () => {
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login } = useAuth();
 
   return useMutation<AuthResponse, ApiError, LoginPayload>({
     mutationFn: async (data: LoginPayload) => {
