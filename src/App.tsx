@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuthStore } from "./store/useAuthStore";
 import { AuthPage } from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import { Toaster } from "react-hot-toast";
 import { THEME } from "./constants/theme";
 import EditProfilePage from "./pages/EditProfilePage";
-import { useAuthStore } from "./store/useAuthStore";
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

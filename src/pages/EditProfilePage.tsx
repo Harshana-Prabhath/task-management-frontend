@@ -1,41 +1,49 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, User, Eye, EyeOff, ShieldCheck, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useUpdatePassword } from "../hooks/useUserHooks";
 import { FullScreenLoader } from "../components/ui/FullScreenLoader";
 import { FloatingField } from "../components/ui/FloatingField";
+import { LanguageToggle } from "../components/ui/LaungageToggle";
 import { useAuthStore } from "../store/useAuthStore";
 import {
   changePasswordSchema,
   passwordSchema,
   getFieldErrors,
-} from "../validations/schemas";
+} from "../../src/validations/schemas";
 
 interface PasswordFieldConfig {
   key: "currentPassword" | "newPassword" | "confirmPassword";
-  label: string;
-  placeholder: string;
+  labelKey:
+    | "profile.current_password"
+    | "profile.new_password"
+    | "profile.confirm_password";
+  placeholderKey:
+    | "profile.enter_current_pw"
+    | "profile.enter_new_pw"
+    | "profile.reenter_new_pw";
 }
-
 const passwordFields: PasswordFieldConfig[] = [
   {
     key: "currentPassword",
-    label: "Current Password",
-    placeholder: "Enter current password",
+    labelKey: "profile.current_password",
+    placeholderKey: "profile.enter_current_pw",
   },
   {
     key: "newPassword",
-    label: "New Password",
-    placeholder: "Enter new password",
+    labelKey: "profile.new_password",
+    placeholderKey: "profile.enter_new_pw",
   },
   {
     key: "confirmPassword",
-    label: "Confirm New Password",
-    placeholder: "Re-enter new password",
+    labelKey: "profile.confirm_password",
+    placeholderKey: "profile.reenter_new_pw",
   },
 ];
 
 export default function EditProfilePage() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
@@ -72,7 +80,6 @@ export default function EditProfilePage() {
   const toggleVisible = (key: PasswordFieldConfig["key"]) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  // Instant single-field validation on click away (onBlur)
   const validateField = (field: keyof typeof form) => {
     if (!isEditing) return;
 
@@ -168,22 +175,25 @@ export default function EditProfilePage() {
     <>
       <FullScreenLoader
         isLoading={isSubmitting}
-        message="Securing your account and re-hashing credentials..."
+        message={t("profile.securing_account")}
       />
       <div className="min-h-screen bg-[#0B0F19] px-4 py-8 text-white sm:px-6 lg:px-10">
         <div className="mx-auto max-w-5xl">
-          <header className="mb-8 flex flex-col gap-4">
-            <button
-              type="button"
-              onClick={() => navigate("/task-dashboard")}
-              className="inline-flex w-fit items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
-            </button>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Profile Settings
-            </h1>
+          <header className="mb-8 flex flex-row items-center justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => navigate("/task-dashboard")}
+                className="inline-flex w-fit items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("profile.back_to_dashboard")}
+              </button>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                {t("profile.title")}
+              </h1>
+            </div>
+            <LanguageToggle />
           </header>
 
           <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -197,10 +207,10 @@ export default function EditProfilePage() {
 
                 <div className="mt-5 inline-flex items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-400/10 px-3 py-1 text-xs font-medium text-indigo-200">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  {user.role}
+                  {user.role === "Admin" ? t("common.admin") : t("common.user")}
                 </div>
                 <p className="mt-4 text-[11px] uppercase tracking-wide text-white/30">
-                  Workspace Authorization
+                  {t("profile.workspace_auth")}
                 </p>
               </div>
             </aside>
@@ -212,14 +222,14 @@ export default function EditProfilePage() {
             >
               <section>
                 <h3 className="text-sm font-semibold text-white/70">
-                  Personal Metrics
+                  {t("profile.personal_metrics")}
                 </h3>
                 <p className="mt-1 text-xs text-white/40">
-                  Account identity parameters mapped to your active session.
+                  {t("profile.identity_sub")}
                 </p>
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <FloatingField label="Full Name">
+                  <FloatingField label={t("auth.full_name")}>
                     <input
                       type="text"
                       value={user.name}
@@ -227,7 +237,7 @@ export default function EditProfilePage() {
                       className="w-full bg-transparent text-sm text-white/50 outline-none cursor-not-allowed"
                     />
                   </FloatingField>
-                  <FloatingField label="Email Address">
+                  <FloatingField label={t("auth.email")}>
                     <input
                       type="email"
                       value={user.email}
@@ -242,18 +252,17 @@ export default function EditProfilePage() {
 
               <section>
                 <h3 className="text-sm font-semibold text-white/70">
-                  Security Guard
+                  {t("profile.security_guard")}
                 </h3>
                 <p className="mt-1 text-xs text-white/40">
-                  Manage account access controls. Click Edit Profile below to make
-                  changes.
+                  {t("profile.security_sub")}
                 </p>
 
                 <div className="mt-4 grid gap-4">
                   {passwordFields.map((field) => (
                     <FloatingField
                       key={field.key}
-                      label={field.label}
+                      label={t(field.labelKey)}
                       error={errors[field.key]}
                     >
                       <div className="flex items-center gap-2">
@@ -263,7 +272,7 @@ export default function EditProfilePage() {
                           onChange={update(field.key)}
                           onBlur={() => validateField(field.key)}
                           placeholder={
-                            isEditing ? field.placeholder : "••••••••••••"
+                            isEditing ? t(field.placeholderKey) : "••••••••••••"
                           }
                           disabled={!isEditing || isSubmitting}
                           className="w-full bg-transparent text-sm text-white placeholder-white/30 outline-none disabled:text-white/30 disabled:cursor-not-allowed"
@@ -296,7 +305,7 @@ export default function EditProfilePage() {
                       onClick={handleCancel}
                       className="rounded-xl border border-white/10 bg-transparent px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/[0.04] disabled:opacity-50"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                     <button
                       type="submit"
@@ -304,8 +313,8 @@ export default function EditProfilePage() {
                       className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B0F19] transition-transform active:scale-95 disabled:opacity-50"
                     >
                       {isSubmitting
-                        ? "Saving Changes..."
-                        : "Save Configurations"}
+                        ? t("profile.saving")
+                        : t("profile.save_config")}
                     </button>
                   </>
                 ) : (
@@ -314,7 +323,7 @@ export default function EditProfilePage() {
                     onClick={() => setIsEditing(true)}
                     className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-[#0B0F19] transition-transform active:scale-95"
                   >
-                    <Lock className="h-4 w-4" /> Edit Profile Security
+                    <Lock className="h-4 w-4" /> {t("profile.edit_security")}
                   </button>
                 )}
               </div>
